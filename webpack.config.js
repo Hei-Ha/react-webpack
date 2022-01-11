@@ -10,18 +10,31 @@ module.exports = {
         clean: true
     },
     devtool: 'inline-source-map',
+    devServer: {
+        static: './dist',
+        hot: true
+    },
     resolve: {
         extensions: ['.ts', '.tsx', '.js' ]
     },
+    plugins: [
+        new HtmlWebpackPlugin({
+            filename: 'index.html',
+            template: path.resolve(__dirname, './src/index.html'),
+            inject: true
+        })
+    ],
     module: {
         rules: [
             {
                 test: /\.css$/,
                 use: ['style-loader', 'css-loader']
+            },
+            {
+                test: /\.(js|ts|jsx)$/,
+                use: ['babel-loader'],
+                exclude: /node_modules/
             }
         ]
     },
-    plugins: [
-        new HtmlWebpackPlugin()
-    ]
 }
