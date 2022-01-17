@@ -35,8 +35,6 @@ class ShowNum extends React.Component {
                 <MyContext.Provider value={'hahahm showNum'}>
                     <Temperature />
                 </MyContext.Provider>
-                <div>
-                </div>
             </div>
         )
     }
