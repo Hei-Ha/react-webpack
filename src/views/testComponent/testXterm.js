@@ -1,7 +1,12 @@
+import { Button } from 'antd'
+import { Terminal } from 'xterm'
+import 'xterm/css/xterm.css';
+
 export function TestXterm () {
+
     return (
         <div>
-            123
+            <Button type={'primary'}>click</Button>
         </div>
     )
 }
