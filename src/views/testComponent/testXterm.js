@@ -101,44 +101,85 @@ export function TestXterm () {
             const totalOffsetLength = str.length + prefix.length // 总偏移量
             const currentOffsetLength = terminal._core.buffer.x // 当前 x 偏移量
 
-            switch(true) {
-                case totalOffsetLength >= terminal.cols - 1: // 总偏移量大于一行的宽度， TODO 需要换行
-                    handleAutoWarp()
-                    break
-                case keyCode === TERMINAL_INPUT_KEY.ENTER: // 按下回车， 需要执行命令
-                    handleInputText()
-                    str = ''
-                    break
-                case keyCode === TERMINAL_INPUT_KEY.BACK: // 删除键
-                    if (currentOffsetLength < prefix.length) { break }
-                    const currentCursorOffSetLength = getCursorOffsetLength(totalOffsetLength - currentOffsetLength, '\x1b[D') // 保留原来光标位置
-                    terminal._core.buffer.x = currentOffsetLength - 1
-                    terminal.write('\x1b[?K' + str.slice(currentOffsetLength - prefix.length))
-                    terminal.write(currentCursorOffSetLength)
-                    str = `${str.slice(0, currentOffsetLength - prefix.length - 1)}${str.slice(currentOffsetLength - prefix.length)}`
-                    break
-                case keyCode === TERMINAL_INPUT_KEY.LEFT: // 左方向键
-                    if (currentOffsetLength > prefix.length) {
-                        terminal.write(key) // '\x1b[D'
-                    }
-                    break
-                case keyCode === TERMINAL_INPUT_KEY.RIGHT: // 右方向键
-                    if (currentOffsetLength < totalOffsetLength) {
-                        terminal.write(key) // '\x1b[C'
-                    }
-                    break
-                case [TERMINAL_INPUT_KEY.UP, TERMINAL_INPUT_KEY.DOWN].includes(keyCode): // 方向上键，下键
-                    break
-                case (currentOffsetLength >= totalOffsetLength) || preStrList.length > 0:  // 当前光标位置（x偏移量）>= 当前已经输入内容的总长度，则继续写入内容
-                    terminal.write(key)
-                    str = str + key
-                    break
-                case currentOffsetLength < totalOffsetLength: // 当前光标位置 < 已输入内容长度之前
-                    const cursorOffSetLength = getCursorOffsetLength(totalOffsetLength - currentOffsetLength, '\x1b[D') // 记录光标位置
-                    terminal.write(`${key}${str.slice(-(totalOffsetLength - currentOffsetLength))}`)
-                    terminal.write(cursorOffSetLength) // 将光标移动位置
-                    str = str.slice(0, totalOffsetLength - currentOffsetLength - 1 ) + key + str.slice(totalOffsetLength - currentOffsetLength - 1)
-                    break
+            if (preStrList.length === 0) {
+                switch(true) {
+                    case totalOffsetLength >= terminal.cols - 1: // 总偏移量大于一行的宽度， TODO 需要换行
+                        handleAutoWarp()
+                        break
+                    case keyCode === TERMINAL_INPUT_KEY.ENTER: // 按下回车， 需要执行命令
+                        handleInputText()
+                        str = ''
+                        break
+                    case keyCode === TERMINAL_INPUT_KEY.BACK: // 删除键
+                        if (currentOffsetLength <= prefix.length) { break }
+                        const currentCursorOffSetLength = getCursorOffsetLength(totalOffsetLength - currentOffsetLength, '\x1b[D') // 保留原来光标位置
+                        terminal._core.buffer.x = currentOffsetLength - 1
+                        terminal.write('\x1b[?K' + str.slice(currentOffsetLength - prefix.length))
+                        terminal.write(currentCursorOffSetLength)
+                        str = `${str.slice(0, currentOffsetLength - prefix.length - 1)}${str.slice(currentOffsetLength - prefix.length)}`
+                        break
+                    case keyCode === TERMINAL_INPUT_KEY.LEFT: // 左方向键
+                        if (currentOffsetLength > prefix.length) {
+                            terminal.write(key) // '\x1b[D'
+                        }
+                        break
+                    case keyCode === TERMINAL_INPUT_KEY.RIGHT: // 右方向键
+                        if (currentOffsetLength < totalOffsetLength) {
+                            terminal.write(key) // '\x1b[C'
+                        }
+                        break
+                    case [TERMINAL_INPUT_KEY.UP, TERMINAL_INPUT_KEY.DOWN].includes(keyCode): // 方向上键，下键
+                        break
+                    case currentOffsetLength < totalOffsetLength: // 无换行：当前光标位置 < 已输入内容长度之前
+                        const cursorOffSetLength = getCursorOffsetLength(totalOffsetLength - currentOffsetLength, '\x1b[D') // 记录光标位置
+                        terminal.write(`${key}${str.slice(-(totalOffsetLength - currentOffsetLength))}`)
+                        terminal.write(cursorOffSetLength) // 将光标移动位置
+                        str = str.slice(0, totalOffsetLength - currentOffsetLength - 1 ) + key + str.slice(totalOffsetLength - currentOffsetLength - 1)
+                        break
+                    case currentOffsetLength >= totalOffsetLength:  // 当前光标位置（x偏移量）>= 当前已经输入内容的总长度，则继续写入内容
+                        // || preStrList.length > 0
+                        terminal.write(key)
+                        str = str + key
+                        break
+                }
+            } else {
+                switch (true) {
+                    case totalOffsetLength > terminal.cols:
+                        handleAutoWarp()
+                        break
+                    case keyCode === TERMINAL_INPUT_KEY.BACK: // 删除键
+                        const currentCursorOffSetLength = getCursorOffsetLength(totalOffsetLength - currentOffsetLength, '\x1b[D') // 保留原来光标位置
+                        terminal._core.buffer.x = currentOffsetLength - 1
+                        terminal.write('\x1b[?K' + str.slice(currentOffsetLength - prefix.length))
+                        terminal.write(currentCursorOffSetLength)
+                        str = `${str.slice(0, currentOffsetLength - prefix.length - 1)}${str.slice(currentOffsetLength - prefix.length)}`
+                        break
+                    case keyCode === TERMINAL_INPUT_KEY.LEFT: // 左方向键
+                        if (currentOffsetLength > 0) {
+                            terminal.write(key) // '\x1b[D'
+                        }
+                        break
+                    case keyCode === TERMINAL_INPUT_KEY.RIGHT: // 右方向键
+                        if (currentOffsetLength < str.length) {
+                            terminal.write(key) // '\x1b[C'
+                        }
+                        break
+                    case [TERMINAL_INPUT_KEY.UP, TERMINAL_INPUT_KEY.DOWN].includes(keyCode): // 方向上键，下键
+                        break
+                    case preStrList.length > 0 && currentOffsetLength < str.length: // 有换行：当前光标位置 < 已输入内容长度之前
+                        console.log(str)
+                        const currentCursorOffSetLength3 = getCursorOffsetLength(str.length - currentOffsetLength, '\x1b[D')
+                        terminal.write(`${key}${str.slice(-(str.length - currentOffsetLength))}`)
+                        console.log(`${key}${str.slice(-(str.length - currentOffsetLength))}`)
+                        terminal.write(currentCursorOffSetLength3) // 将光标移动位置
+                        str = str.slice(0, str.length - currentOffsetLength - 1) + key + str.slice(-(str.length - currentCursorOffSetLength3))
+                        break
+                    default:
+                        console.log(123)
+                        terminal.write(key)
+                        str = str + key
+                        break
+                }
             }
 
         })
