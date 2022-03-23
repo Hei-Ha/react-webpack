@@ -9,6 +9,7 @@ export function TestXterm () {
     const [terminal, setTerminal] = useState(null)
     const [inputString, setInputString] = useState('')
 
+    const prefix = 'admin:~$'
     const terminalInit = () => {
         const term = new Terminal({
             rendererType: 'canvas',
@@ -31,7 +32,6 @@ export function TestXterm () {
         term.loadAddon(fitAddon)
         // 初始化输出
         term.writeln('\x1b[1;1;32mwellcom to web terminal!\x1b[0m')
-        const prefix = 'admin $'
         term.write(prefix)
         setTerminal(term)
     }
@@ -47,7 +47,6 @@ export function TestXterm () {
     *
     * **/
     let str = ''
-    const prefix = 'admin $'
     const TERMINAL_INPUT_KEY = {
         BACK: 8, // 退格删除键
         ENTER: 13, // 回车键
@@ -71,7 +70,9 @@ export function TestXterm () {
     // 按下回车处理方法
     let currentIndex = 0
     let inputTextList = []
+    const preStrList = []
     const handleInputText = () => {
+        preStrList.length = 0 // 清空上一个命令
         if (!str.trim()) {
             terminal.write(`\r\n${prefix}`)
             return
@@ -86,7 +87,6 @@ export function TestXterm () {
     /**
      * 自动换行
      * */
-    const preStrList = []
     const handleAutoWarp = () => {
         preStrList.push(str)
         terminal.write('\n')
@@ -103,21 +103,19 @@ export function TestXterm () {
 
             switch(true) {
                 case totalOffsetLength >= terminal.cols - 1: // 总偏移量大于一行的宽度， TODO 需要换行
-                    console.log(1)
                     handleAutoWarp()
                     break
-                case keyCode === TERMINAL_INPUT_KEY.ENTER: // 按下回车
+                case keyCode === TERMINAL_INPUT_KEY.ENTER: // 按下回车， 需要执行命令
                     handleInputText()
                     str = ''
                     break
                 case keyCode === TERMINAL_INPUT_KEY.BACK: // 删除键
-                    if (currentOffsetLength > prefix.length) {
-                        const cursorOffSetLength = getCursorOffsetLength(totalOffsetLength - currentOffsetLength, '\x1b[D') // 保留原来光标位置
-                        terminal._core.buffer.x = currentOffsetLength - 1
-                        terminal.write('\x1b[?K' + str.slice(currentOffsetLength - prefix.length))
-                        terminal.write(cursorOffSetLength)
-                        str = `${str.slice(0, currentOffsetLength - prefix.length - 1)}${str.slice(currentOffsetLength - prefix.length)}`
-                    }
+                    if (currentOffsetLength < prefix.length) { break }
+                    const currentCursorOffSetLength = getCursorOffsetLength(totalOffsetLength - currentOffsetLength, '\x1b[D') // 保留原来光标位置
+                    terminal._core.buffer.x = currentOffsetLength - 1
+                    terminal.write('\x1b[?K' + str.slice(currentOffsetLength - prefix.length))
+                    terminal.write(currentCursorOffSetLength)
+                    str = `${str.slice(0, currentOffsetLength - prefix.length - 1)}${str.slice(currentOffsetLength - prefix.length)}`
                     break
                 case keyCode === TERMINAL_INPUT_KEY.LEFT: // 左方向键
                     if (currentOffsetLength > prefix.length) {
@@ -131,8 +129,7 @@ export function TestXterm () {
                     break
                 case [TERMINAL_INPUT_KEY.UP, TERMINAL_INPUT_KEY.DOWN].includes(keyCode): // 方向上键，下键
                     break
-                case currentOffsetLength >= totalOffsetLength:  // 当前光标位置（x偏移量）>= 当前已经输入内容的总长度，则继续写入内容
-                    console.log(3)
+                case (currentOffsetLength >= totalOffsetLength) || preStrList.length > 0:  // 当前光标位置（x偏移量）>= 当前已经输入内容的总长度，则继续写入内容
                     terminal.write(key)
                     str = str + key
                     break
