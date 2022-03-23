@@ -2,8 +2,10 @@ import { Button, Card } from 'antd'
 import { Terminal } from 'xterm'
 import { FitAddon } from 'xterm-addon-fit'
 import { AttachAddon } from 'xterm-addon-attach';
+import { WebLinksAddon } from 'xterm-addon-web-links'
 import 'xterm/css/xterm.css';
 import {useEffect, useState} from "react";
+
 
 export function TestXterm () {
     const [terminal, setTerminal] = useState(null)
