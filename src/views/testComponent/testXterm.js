@@ -9,7 +9,36 @@ import {useEffect, useState} from "react";
 
 export function TestXterm () {
     const [terminal, setTerminal] = useState(null)
-    const [inputString, setInputString] = useState('')
+    const [socket, setSocket] = useState(null)
+
+    useEffect(() => {
+        socketInit()
+        terminalInit()
+    }, [])
+
+
+    useEffect(() => {
+        if (!socket) return
+        socket.onopen = () => {
+            socket.send('Message From Client')
+        }
+        socket.onerror = (error) => {
+            console.log(`WebSocket error: ${error}`)
+        }
+        socket.onmessage = (e) => {
+            console.log(e.data)
+            terminal.write(e.data)
+        }
+        return () => {
+            socket.close();
+            socket.dispose();
+        };
+    }, [socket])
+
+    const socketInit = () => {
+        setSocket(new WebSocket('ws://localhost:9000'))
+    }
+
 
     const prefix = 'admin:~$'
     const terminalInit = () => {
@@ -18,31 +47,34 @@ export function TestXterm () {
             convertEol: true,
             scrollback: 10,
             disableStdin: false,
-            // cursorStyle: 'underline',
             cursorBlink: true,
             theme: {
                 foreground: 'yellow',
                 background: '#060101',
                 cursor: 'help',
                 lineHeight: 20
-            },
+            }
         })
         // 创建实例
         term.open(document.getElementById('terminal'))
         // 适配continue 元素
         const fitAddon = new FitAddon()
+        // const attachAddon = new AttachAddon(socket)
         term.loadAddon(fitAddon)
+        // term.loadAddon(attachAddon)
         // 初始化输出
         term.writeln('\x1b[1;1;32mwellcom to web terminal!\x1b[0m')
         term.write(prefix)
         setTerminal(term)
     }
 
+
+
     useEffect(() => {
-        terminalInit()
-    }, [])
-
-
+        if (terminal) {
+            handleOnKeyAction()
+        }
+    }, [terminal])
 
     /*
     *  terminal 的输入配置
@@ -74,15 +106,8 @@ export function TestXterm () {
     let inputTextList = []
     const preStrList = []
     const handleInputText = () => {
+        socket.send(str.trim())
         preStrList.length = 0 // 清空上一个命令
-        if (!str.trim()) {
-            terminal.write(`\r\n${prefix}`)
-            return
-        }
-        if (inputTextList.indexOf(str) === -1) {
-            inputTextList.push(str)
-            currentIndex = inputTextList.length
-        }
         terminal.write(`\r\n${prefix}`)
     }
 
@@ -186,12 +211,6 @@ export function TestXterm () {
 
         })
     }
-
-    useEffect(() => {
-        if (terminal) {
-            handleOnKeyAction()
-        }
-    }, [terminal])
 
 
 

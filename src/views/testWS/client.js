@@ -3,9 +3,12 @@ import {useEffect, useState} from "react";
 
 export function Client () {
     const [socket, setSocket] = useState(null)
-
     useEffect(() => {
         setSocket(new WebSocket('ws://localhost:9000'))
+        return () => {
+            socket.close();
+            socket.dispose();
+        };
     }, [])
 
     useEffect(() => {
@@ -17,8 +20,8 @@ export function Client () {
             console.log(`WebSocket error: ${error}`)
         }
         socket.onmessage = (e) => {
-            console.log(e.data)
             console.log('1231231')
+            console.log(e.data)
         }
     }, [socket])
 
@@ -28,7 +31,6 @@ export function Client () {
 
 
     return <>
-        <div>1212</div>
         <button onClick={() => { clientSendMsg() }}>click</button>
     </>
 }
