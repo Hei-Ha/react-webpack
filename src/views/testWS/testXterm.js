@@ -1,8 +1,8 @@
 import { Button, Card } from 'antd'
 import { Terminal } from 'xterm'
 import { FitAddon } from 'xterm-addon-fit'
-import { AttachAddon } from 'xterm-addon-attach';
-import { WebLinksAddon } from 'xterm-addon-web-links'
+// import { AttachAddon } from 'xterm-addon-attach';
+// import { WebLinksAddon } from 'xterm-addon-web-links'
 import 'xterm/css/xterm.css';
 import {useEffect, useState} from "react";
 
@@ -16,11 +16,12 @@ export function TestXterm () {
         terminalInit()
     }, [])
 
-
     useEffect(() => {
         if (!socket) return
+        // const attachAddon = new AttachAddon(socket)
+        // terminal.loadAddon(attachAddon)
         socket.onopen = () => {
-            socket.send('Message From Client')
+            console.log('连接服务成功...')
         }
         socket.onerror = (error) => {
             console.log(`WebSocket error: ${error}`)
@@ -35,12 +36,21 @@ export function TestXterm () {
         };
     }, [socket])
 
+
+    const onSend = (data) => {
+        data = data.toString()
+        // data = Array.isArray(data) ? data.toString() : data;
+        // data = typeof data === "object"? JSON.stringify(data) : data;
+        data = data.replace(/\\\\/, "\\");
+        socket.send(data)
+    }
+    /**
+     * 初始化 socket
+     * */
     const socketInit = () => {
         setSocket(new WebSocket('ws://localhost:9000'))
     }
 
-
-    const prefix = 'admin:~$'
     const terminalInit = () => {
         const term = new Terminal({
             rendererType: 'canvas',
@@ -57,14 +67,11 @@ export function TestXterm () {
         })
         // 创建实例
         term.open(document.getElementById('terminal'))
-        // 适配continue 元素
-        const fitAddon = new FitAddon()
-        // const attachAddon = new AttachAddon(socket)
+        const fitAddon = new FitAddon() // 适配continue 元素
         term.loadAddon(fitAddon)
-        // term.loadAddon(attachAddon)
+        fitAddon.fit()
         // 初始化输出
         term.writeln('\x1b[1;1;32mwellcom to web terminal!\x1b[0m')
-        term.write(prefix)
         setTerminal(term)
     }
 
@@ -72,13 +79,34 @@ export function TestXterm () {
 
     useEffect(() => {
         if (terminal) {
-            handleOnKeyAction()
+            // handleOnKeyAction()
+            terminal.prompt = () => {
+                terminal.write("\r\nroot $ ");
+            };
+            terminal.prompt()
+
+            terminal.onData(function(key) {
+                // let order = {
+                //     Data: key,
+                //     Op: "stdin"
+                // };
+                // onSend(order);
+                // 为解决窗体resize方法才会向后端发送列数和行数，所以页面加载时也要触发此方法
+                // onSend({
+                //     Op: "resize",
+                //     Cols: parseInt(terminal.cols),
+                //     Rows: parseInt(terminal.rows)
+                // });
+                onSend(key)
+            })
         }
     }, [terminal])
 
+
+    const prefix = 'admin:~$'
+
     /*
     *  terminal 的输入配置
-    *
     * **/
     let str = ''
     const TERMINAL_INPUT_KEY = {
@@ -100,8 +128,9 @@ export function TestXterm () {
         }
         return cursorOffsetLength
     }
-
-    // 按下回车处理方法
+    /**
+     * 按下回车处理方法
+     * */
     let currentIndex = 0
     let inputTextList = []
     const preStrList = []
@@ -110,7 +139,6 @@ export function TestXterm () {
         preStrList.length = 0 // 清空上一个命令
         terminal.write(`\r\n${prefix}`)
     }
-
     /**
      * 自动换行
      * */
@@ -119,8 +147,9 @@ export function TestXterm () {
         terminal.write('\n')
         str = ''
     }
-
-    // 添加键入事件
+    /**
+     * 添加键入事件
+     * */
     const handleOnKeyAction = () => {
         terminal.onKey((e) => {
             const { key, domEvent } = e
