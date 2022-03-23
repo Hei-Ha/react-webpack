@@ -5,13 +5,13 @@ import React, { Component } from 'react'
 // import TestGaoJie from "./views/testComponent/gaoJie";
 // import ShowNum from './views/testComponent/showNum.js'
 import { TestXterm } from "./views/testComponent/testXterm";
+import { Client } from './views/testWS/client'
+
 
 class App extends Component {
+
     render() {
-        const ref = React.createRef();
-        return (
-            <TestXterm />
-        )
+        return <Client />
     }
 }
 
