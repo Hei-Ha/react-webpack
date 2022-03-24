@@ -11,6 +11,7 @@ export function Client () {
         };
     }, [])
 
+    
     useEffect(() => {
         if (!socket) return
         socket.onopen = () => {
