@@ -22,7 +22,6 @@ class TestGaoJie extends React.Component {
 }
 
 
-
 function logProps(WrappedComponent) {
     class LogProps extends React.Component {
         componentDidUpdate(prevProps) {
