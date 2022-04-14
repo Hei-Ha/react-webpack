@@ -42,3 +42,12 @@ function logProps(WrappedComponent) {
 }
 
 export default logProps(TestGaoJie)
+// 1
+// 2
+// 3
+// 4
+// 5
+// 6
+
+// 7
+// 8
