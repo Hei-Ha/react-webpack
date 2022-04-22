@@ -27,3 +27,5 @@ function logProps(WrappedComponent) {
 }
 
 export default logProps(TestRef)
+
+// nhaha

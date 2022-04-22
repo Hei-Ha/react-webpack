@@ -11,3 +11,5 @@ yarn-error.log*
 *.sln
 
 node_modules
+yarn.lock
+

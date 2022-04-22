@@ -24,8 +24,9 @@ class ShowNum extends React.Component {
     //     this.setState({
     //         temperature1: val - 1,
     //         temperature2: val
-    //     })
+    //     })k
     // }
+    // qq
 
     render() {
         return (
@@ -41,3 +42,4 @@ class ShowNum extends React.Component {
 }
 
 export default ShowNum
+// 嘿嘿
