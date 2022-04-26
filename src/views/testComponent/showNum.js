@@ -40,4 +40,9 @@ class ShowNum extends React.Component {
     }
 }
 
+
 export default ShowNum
+// 嘿嘿
+//1
+//2
+
